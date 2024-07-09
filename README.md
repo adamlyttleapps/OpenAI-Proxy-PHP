@@ -4,7 +4,7 @@ A simple PHP script designed to protect your OpenAI API key and ensure secure co
 
 ## Overview
 
-OpenAIProxy-PHP is a PHP script that secures your OpenAI API key, preventing it from being exposed in your application code or transmitted in plaintext over the network. This script is utilized in the AIWrapper-SwiftUI repository to enhance security.
+OpenAI-Proxy-PHP is a PHP script that secures your OpenAI API key, preventing it from being exposed in your application code or transmitted in plaintext over the network. This script is utilized in the AIWrapper-SwiftUI repository to enhance security.
 
 ## Features
 
@@ -18,7 +18,7 @@ This script is used in the AIWrapper-SwiftUI repo located at
 
 ## Usage:
 
-To use OpenAIProxy-PHP, follow these steps:
+To use OpenAI-Proxy-PHP, follow these steps:
 
 Copy openai_proxy.php onto your server and then follow the instructions withint the source code:
 
