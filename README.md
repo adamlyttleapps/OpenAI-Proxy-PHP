@@ -46,7 +46,7 @@ When the $shared_secret_key is set, the script verifies the @$_POST['hash'] valu
 
 ## Contributions
 
-Contributions are welcome! Feel free to open an issue or submit a pull request on the [https://github.com/adamlyttleapps/OpenAIProxy-PHP](GitHub repository).
+Contributions are welcome! Feel free to open an issue or submit a pull request on the [GitHub repository](https://github.com/adamlyttleapps/OpenAIProxy-PHP).
 
 ## MIT License
 
