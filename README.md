@@ -1,4 +1,4 @@
-# OpenAIProxy-PHP
+# OpenAI-Proxy-PHP
 
 A simple PHP script designed to protect your OpenAI API key and ensure secure communication.
 
@@ -46,7 +46,7 @@ When the $shared_secret_key is set, the script verifies the @$_POST['hash'] valu
 
 ## Contributions
 
-Contributions are welcome! Feel free to open an issue or submit a pull request on the [GitHub repository](https://github.com/adamlyttleapps/OpenAIProxy-PHP).
+Contributions are welcome! Feel free to open an issue or submit a pull request on the [GitHub repository](https://github.com/adamlyttleapps/OpenAI-Proxy-PHP).
 
 ## MIT License
 
