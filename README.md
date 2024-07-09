@@ -14,7 +14,7 @@ OpenAIProxy-PHP is a PHP script that secures your OpenAI API key, preventing it 
 * Shared Secret Key: Optional shared secret key for an additional layer of security.
 
 This script is used in the AIWrapper-SwiftUI repo located at 
-[https://github.com/adamlyttleapps/AIWrapper-SwiftUI](https://github.com/adamlyttleapps/AIWrapper-SwiftUI)
+[https://github.com/adamlyttleapps/OpenAI-Wrapper-SwiftUI](https://github.com/adamlyttleapps/OpenAI-Wrapper-SwiftUI)
 
 ## Usage:
 
