@@ -1,171 +1,160 @@
 <?php
+// AI Wrapper Proxy Script
+// Created by Adam Lyttle (Cleaned & Improved by ChatGPT)
 
-    // AI Wrapper Proxy Script
-    // Created by Adam Lyttle on Jul 09 2024
+// Make cool stuff and share your build:
+//  --> x.com/adamlyttleapps
+//  --> github.com/adamlyttleapps
 
-    // Make cool stuff and share your build with me:
+// === CONFIGURATION ===
 
-    //  --> x.com/adamlyttleapps
-    //  --> github.com/adamlyttleapps
+// STEP 1: ADD YOUR OPENAI KEY (use environment variable for safety)
+$openai_key = getenv("OPENAI_API_KEY");
 
-    //STEP 1: ADD YOUR OPENAI KEY
-    $openai_key = "sk-XXXXXUcxGZXXXXXUQOXDXXXXXkFJQ2AEXXXXXXi29v71RJF";
+// STEP 2: SPECIFY THE LOCATION WHERE THIS SCRIPT IS HOSTED
+$script_location = "https://yourdomain.com/demo/OpenAIProxy-PHP"; // <-- update this
 
-    //STEP 2: SPECIFY THE LOCATION WHERE THIS SCRIPT IS STORED:
-    $script_location = "https://adamlyttleapps.com/demo/OpenAIProxy-PHP";
+// STEP 3: CUSTOM SYSTEM PROMPT
+$custom_prompt = "You are a friendly chatbot called 'Test Identifier: AI Wrapper Test Agent' whose only purpose is to assist the user with identifying what they have taken a photo of, tips, and other helpful information.";
 
-    //STEP 3: CONFIGURE YOUR CUSTOM PROMPT:
-    $custom_prompt = "You are a friendly chatbot called 'Test Idenfitier: AI Wrapper Test Agent' whose only purpose is to assist the user with identifying what they have taken a photo of, tips, and other information which may be helpful";
+// STEP 4: SHARED SECRET KEY (optional)
+$shared_secret_key = ""; // leave blank to disable
 
-    //STEP 4: SETUP THE SHARED SECRET KEY (this is the secret key in the client and server, leave blank if you want to bypass this check)
-    $shared_secret_key = "";
+// === MAIN LOGIC STARTS HERE ===
 
+header('Content-Type: text/plain; charset=utf-8');
 
+// Check if messages were sent
+if (!isset($_POST['messages']) || empty($_POST['messages'])) {
+    http_response_code(400);
+    echo "Missing 'messages' parameter.";
+    exit();
+}
 
-
-    //check if the client has provided messages:
-    if(!@$_POST['messages']) {
-        header('HTTP/1.1 402 Forbidden');
+// Shared secret check (optional)
+if (!empty($shared_secret_key)) {
+    $client_hash = $_POST['hash'] ?? '';
+    $expected_hash = hash_hmac('sha256', $_POST['messages'], $shared_secret_key);
+    if (!hash_equals($expected_hash, $client_hash)) {
+        http_response_code(403);
+        echo "Invalid shared secret.";
         exit();
     }
-    //check that the secret_key hash is correct:
-    else if ($shared_secret_key && md5($_POST['messages'].$shared_secret_key) != @$_POST['hash']) {
-        print("Incorrect shared_secret_key");
-        exit();
+}
+
+class OpenAI {
+    private $api_key;
+
+    public function __construct($key) {
+        $this->api_key = $key;
     }
 
-    class Openai{
-        private function secret_key(){
-            global $openai_key;
-            return $secret_key = "Bearer $openai_key";
-        }
-    
-        public function request($messages, $max_tokens){ 
-    
-            $request_body = [
+    private function secret_key() {
+        return "Bearer {$this->api_key}";
+    }
+
+    public function request($messages, $max_tokens = 1500) {
+        $body = [
+            "model" => "gpt-4o",
             "messages" => $messages,
             "max_tokens" => $max_tokens,
             "temperature" => 0.7,
             "top_p" => 1,
             "presence_penalty" => 0.75,
-            "frequency_penalty"=> 0.75,
+            "frequency_penalty" => 0.75,
             "stream" => false,
-            "model" => "gpt-4o", //configure model here
-            ];
-    
-            $postfields = json_encode($request_body);
-            $curl = curl_init();
-            curl_setopt_array($curl, [
+        ];
+
+        $curl = curl_init();
+        curl_setopt_array($curl, [
             CURLOPT_URL => "https://api.openai.com/v1/chat/completions",
             CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_ENCODING => "",
-            CURLOPT_MAXREDIRS => 10,
             CURLOPT_TIMEOUT => 60,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
             CURLOPT_CUSTOMREQUEST => "POST",
-            CURLOPT_POSTFIELDS => $postfields,
+            CURLOPT_POSTFIELDS => json_encode($body),
             CURLOPT_HTTPHEADER => [
                 'Content-Type: application/json',
                 'Authorization: ' . $this->secret_key()
-            ],
-            ]);
-    
-            $response = curl_exec($curl);
-            $err = curl_error($curl);
-    
-            curl_close($curl);
-    
-            if ($err) {
-                return "Error #:" . $err;
-            } else {
-                return json_decode($response,true);
-            }
-    
+            ]
+        ]);
+
+        $response = curl_exec($curl);
+        $error = curl_error($curl);
+        curl_close($curl);
+
+        return $error ? ['error' => ['message' => $error]] : json_decode($response, true);
+    }
+}
+
+// Helpers for formatting messages
+
+function add_message($role, $text) {
+    return [
+        'role' => $role,
+        'content' => [['type' => 'text', 'text' => $text]]
+    ];
+}
+
+function add_message_image_data($role, $base64_image) {
+    global $script_location;
+
+    $decoded = base64_decode(urldecode($base64_image), true);
+    if ($decoded === false) return null;
+
+    $hash = md5($base64_image);
+    $dir = __DIR__ . "/tmp";
+    if (!is_dir($dir)) mkdir($dir, 0755, true);
+
+    $file_path = "$dir/{$hash}.jpg";
+    file_put_contents($file_path, $decoded);
+
+    // Basic validation
+    if (!getimagesize($file_path)) {
+        unlink($file_path);
+        return null;
+    }
+
+    return [
+        'role' => $role,
+        'content' => [[
+            'type' => 'image_url',
+            'image_url' => ['url' => "$script_location/tmp/{$hash}.jpg"]
+        ]]
+    ];
+}
+
+function parse_messages($raw_messages) {
+    global $custom_prompt;
+
+    $parsed = [add_message("system", $custom_prompt)];
+
+    foreach ($raw_messages as $m) {
+        if (!empty($m['message'])) {
+            $parsed[] = add_message($m['role'], $m['message']);
         }
-    
-    }
-
-    //parses single message with image_data
-    function add_message_image_data($role,$data) {
-
-        global $script_location;
-
-        $data = urldecode($data);
-        $hash = md5($data);
-
-        //save the tmp folder
-        @mkdir("tmp"); //create temp folder
-        @chmod("tmp", 0777); //setup permission of folder
-        $f = @fopen("tmp/{$hash}.jpg","w"); //open tmp filename
-        @fwrite($f, $data); //write data
-        @fclose($f); //close connection
-
-        $item = new stdClass();
-        $item->role = $role;
-
-        $content = new stdClass();
-        $content->type = "image_url";
-        $content->image_url->url = "$script_location/tmp/{$hash}.jpg";
-
-        $item->content[] = $content;
-
-        return $item;
-    }
-    
-    //parses single message with text
-    function add_message($role,$text) {
-        $item = new stdClass();
-        $item->role = $role;
-
-        $content = new stdClass();
-        $content->type = "text";
-        $content->text = $text;
-
-        $item->content[] = $content;
-
-        return $item;
-    }
-
-    //parses all received messages
-    function parse_messages($messages) {
-
-        global $custom_prompt;
-
-        $parsedMessages = [add_message("system", "$custom_prompt")];
-
-        $i = 0;
-        foreach ($messages as $message) {
-            if($message['image']) {
-                $parsedMessages[] = add_message_image_data($message['role'], $message['image']);
-            }
-            if($message['message']) {
-                $parsedMessages[] = add_message($message['role'], $message['message']);
-            }
+        if (!empty($m['image'])) {
+            $img_message = add_message_image_data($m['role'], $m['image']);
+            if ($img_message) $parsed[] = $img_message;
         }
-        
-        return $parsedMessages;
-
     }
 
+    return $parsed;
+}
 
+// Process the messages
+$input = json_decode($_POST['messages'], true);
+$messages = parse_messages($input);
 
+// Query OpenAI
+$openai = new OpenAI($openai_key);
+$response = $openai->request($messages);
 
-    //this is where the logic starts:
-
-    //process the received messages
-    $messages = parse_messages(json_decode(@$_POST['messages'], true));
-
-    //connects to openai and returns result
-    $q = New Openai();
-    $openai = $q->request($messages, 1500);
-
-    if($openai['choices'][0]['message']['role']=="assistant") {
-        $message = $openai['choices'][0]['message']['content'];
-        print($message);
-    }
-    else {
-        print("There was an error: {$openai['error']['message']}");
-    }
-
+// Output response
+if (isset($response['choices'][0]['message']['content'])) {
+    echo $response['choices'][0]['message']['content'];
+} elseif (isset($response['error']['message'])) {
+    echo "OpenAI Error: " . $response['error']['message'];
+} else {
+    echo "An unknown error occurred.";
+}
 ?>
