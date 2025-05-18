@@ -1,6 +1,9 @@
 <?php
 // AI Wrapper Proxy Script
-// Created by Adam Lyttle (Cleaned & Improved by ChatGPT)
+// Created by Adam Lyttle
+
+// Security improvements provided by:
+// https://github.com/quinncomendant
 
 // Make cool stuff and share your build:
 //  --> x.com/adamlyttleapps
