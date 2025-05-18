@@ -49,7 +49,17 @@ $shared_secret_key = "";
 
 ## Shared Secret Key
 
-When the $shared_secret_key is set, the script verifies the @$_POST['hash'] value by comparing it against md5("{$_POST['messages']}{$POST['shared_secret_key']}"). Each client request must encode the hash with the shared secret key, allowing you to control access by changing the key.
+When the $shared_secret_key is set, the script expects each client request to include a secure HMAC hash. The server verifies the incoming request by computing:
+```
+hash_hmac('sha256', $_POST['messages'], $shared_secret_key)
+```
+It then compares the result against the client-provided $_POST['hash'] using hash_equals() to prevent timing attacks.
+
+This allows you to control access by rotating or updating the shared secret. If the hash is missing or incorrect, the request will be rejected with a 403 response.
+
+## Special Thanks
+
+Special thanks to [quinncomendant](https://github.com/quinncomendant) for providing important security recommendations
 
 ## Contributions
 
