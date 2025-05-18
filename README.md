@@ -27,7 +27,14 @@ Copy openai_proxy.php onto your server and then follow the instructions withint 
 
 ```
 // STEP 1: ADD YOUR OPENAI KEY
-$openai_key = "sk-XXXXXUcxGZXXXXXUQOXDXXXXXkFJQ2AEXXXXXXi29v71RJF";
+For Apache (.htaccess):
+SetEnv OPENAI_API_KEY sk-xxxxxx...
+
+For Nginx + PHP-FPM (conf):
+fastcgi_param OPENAI_API_KEY sk-xxxxxx...;
+
+Or in php.ini:
+env[OPENAI_API_KEY] = "sk-xxxxxx..."
 
 // STEP 2: SPECIFY THE LOCATION WHERE THIS SCRIPT IS STORED
 $script_location = "https://adamlyttleapps.com/demo/OpenAIProxy-PHP";
